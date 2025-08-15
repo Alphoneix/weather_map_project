@@ -55,7 +55,7 @@ function WeatherCard({ weather }) {
                     <Grid xs={6}>
                         <Typography variant="body2">Nem: {current.humidity}%</Typography>
                     </Grid>
-                    <Grid xs={12}>
+                    <Grid xs={6}>
                         <Typography variant="body2" align="center">Rüzgar: {current.wind_kph} km/sa</Typography>
                     </Grid>
                 </Grid>
