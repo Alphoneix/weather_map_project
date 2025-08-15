@@ -7,16 +7,18 @@ import {
     Box,
     Typography,
     CircularProgress,
-    Alert,
     ButtonGroup,
     Button,
+    Snackbar,
+    Alert as MuiAlert,
 } from "@mui/material";
 import WeatherCard from "./WeatherCard";
 import CitySelector from "./CitySelector";
 import WeatherForecast from "./WeatherForecast";
 import { fetchWeather, fetchWeatherByCoordinates, getCurrentLocation } from "./api";
+import { useTheme } from "@mui/material/styles";
 
-// EK: Forecast endpoint'i
+// Forecast endpoint'i
 async function fetchWeatherForecast(city, days = 7) {
     const API_KEY = import.meta.env.VITE_WEATHER_API_KEY;
     const url = `https://api.weatherapi.com/v1/forecast.json?key=${API_KEY}&q=${encodeURIComponent(city)}&days=${days}&lang=tr`;
@@ -32,51 +34,60 @@ const theme = createTheme({
 });
 
 function App() {
+    const muiTheme = useTheme() || theme;
     const [weather, setWeather] = useState(null);
     const [forecast, setForecast] = useState(null);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState("");
     const [selectedCity, setSelectedCity] = useState("Ankara");
     const [locationLoading, setLocationLoading] = useState(false);
-    const [mode, setMode] = useState("anlik"); // 'anlik' | '7gun' | '14gun'
+    const [mode, setMode] = useState("anlik");
+    // Snackbar hata state
+    const [snackbar, setSnackbar] = useState({ open: false, msg: "" });
 
-    // Anlık modda bugünkü hava durumu yükle
+    // Sabit buton border rengi
+    const borderColor = "#333";
+
+    // Hataları toast/snackbar'da göster
+    const showSnackbar = (msg) => setSnackbar({ open: true, msg });
+    const handleSnackbarClose = (_, reason) => {
+        if (reason === "clickaway") return;
+        setSnackbar({ open: false, msg: "" });
+    };
+
+    // Weather yükleme
     const loadWeatherData = async (city) => {
         try {
             setLoading(true);
-            setError("");
             const data = await fetchWeather(city);
             setWeather(data);
             setSelectedCity(data.location.name);
-        } catch (err) {
-            setError("Hava durumu verisi alınamadı. Lütfen daha sonra tekrar deneyin.");
+        } catch {
+            showSnackbar("Hava durumu verisi alınamadı. Lütfen daha sonra tekrar deneyin.");
             setWeather(null);
         } finally {
             setLoading(false);
         }
     };
 
-    // Forecast verisi yükle
+    // Forecast yükleme
     const loadForecastData = async (city, days) => {
         try {
             setLoading(true);
-            setError("");
             const data = await fetchWeatherForecast(city, days);
             setForecast(data);
             setSelectedCity(data.location.name);
-        } catch (err) {
-            setError("Tahmin verisi alınamadı.");
+        } catch {
+            showSnackbar("Tahmin verisi alınamadı.");
             setForecast(null);
         } finally {
             setLoading(false);
         }
     };
 
-    // Konuma göre bugünkü hava durumu ve forecast
+    // Konuma göre yükleme
     const loadWeatherByLocation = async (days) => {
         try {
             setLocationLoading(true);
-            setError("");
             const position = await getCurrentLocation();
             if (mode === "anlik") {
                 const data = await fetchWeatherByCoordinates(position.latitude, position.longitude);
@@ -92,9 +103,9 @@ function App() {
             }
         } catch (err) {
             if (err.code === 1) {
-                setError("Konum izni reddedildi. Manuel olarak şehir seçebilirsiniz.");
+                showSnackbar("Konum izni reddedildi. Manuel olarak şehir seçebilirsiniz.");
             } else {
-                setError("Konum alınamadı. Manuel olarak şehir seçebilirsiniz.");
+                showSnackbar("Konum alınamadı. Manuel olarak şehir seçebilirsiniz.");
             }
             if (mode === "anlik") loadWeatherData("Ankara");
             else loadForecastData("Ankara", mode === "7gun" ? 7 : 14);
@@ -140,23 +151,22 @@ function App() {
             const initializeWeather = async () => {
                 try {
                     setLocationLoading(true);
-                    setError("");
                     const position = await getCurrentLocation();
                     const data = await fetchWeatherByCoordinates(position.latitude, position.longitude);
                     setWeather(data);
                     setSelectedCity(data.location.name);
                 } catch (err) {
                     if (err.code === 1) {
-                        setError("Konum izni reddedildi. Ankara hava durumu gösteriliyor.");
+                        showSnackbar("Konum izni reddedildi. Ankara hava durumu gösteriliyor.");
                     } else {
-                        setError("Konum alınamadı. Ankara hava durumu gösteriliyor.");
+                        showSnackbar("Konum alınamadı. Ankara hava durumu gösteriliyor.");
                     }
                     try {
                         const data = await fetchWeather("Ankara");
                         setWeather(data);
                         setSelectedCity(data.location.name);
                     } catch {
-                        setError("Hava durumu verisi alınamadı.");
+                        showSnackbar("Hava durumu verisi alınamadı.");
                     }
                 } finally {
                     setLocationLoading(false);
@@ -168,7 +178,6 @@ function App() {
             const initializeForecast = async () => {
                 try {
                     setLocationLoading(true);
-                    setError("");
                     const position = await getCurrentLocation();
                     const data = await fetchWeatherForecast(
                         `${position.latitude},${position.longitude}`,
@@ -178,9 +187,9 @@ function App() {
                     setSelectedCity(data.location.name);
                 } catch (err) {
                     if (err.code === 1) {
-                        setError("Konum izni reddedildi. Ankara tahmini gösteriliyor.");
+                        showSnackbar("Konum izni reddedildi. Ankara tahmini gösteriliyor.");
                     } else {
-                        setError("Konum alınamadı. Ankara tahmini gösteriliyor.");
+                        showSnackbar("Konum alınamadı. Ankara tahmini gösteriliyor.");
                     }
                     try {
                         const data = await fetchWeatherForecast(
@@ -190,7 +199,7 @@ function App() {
                         setForecast(data);
                         setSelectedCity(data.location.name);
                     } catch {
-                        setError("Tahmin verisi alınamadı.");
+                        showSnackbar("Tahmin verisi alınamadı.");
                     }
                 } finally {
                     setLocationLoading(false);
@@ -202,15 +211,12 @@ function App() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [mode]);
 
-    // Sabit border rengi (gri)
-    const borderColor = "#333";
-
     return (
         <ThemeProvider theme={theme}>
             <CssBaseline />
             <Container maxWidth="sm" sx={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", py: 2 }}>
                 <Box width="100%">
-                    <Typography variant="h4" align="center" gutterBottom>
+                    <Typography variant="h4" align="center" gutterBottom sx={{ minHeight: 56 }}>
                         Türkiye Hava Durumu
                     </Typography>
 
@@ -220,8 +226,8 @@ function App() {
                         onLocationRequest={handleLocationRequest}
                     />
 
-                    {/* Butonlar */}
-                    <Box sx={{ mb: 3, display: "flex", justifyContent: "center" }}>
+                    {/* Butonlar: minHeight ile sabit yükseklik */}
+                    <Box sx={{ mb: 3, display: "flex", justifyContent: "center", minHeight: 48 }}>
                         <ButtonGroup variant="contained" fullWidth>
                             <Button
                                 variant={mode === "anlik" ? "contained" : "outlined"}
@@ -229,7 +235,7 @@ function App() {
                                 onClick={() => handleModeChange("anlik")}
                                 sx={{
                                     bgcolor: mode === "anlik" ? "#1E1E1E" : undefined,
-                                    color: mode === "anlik" ? "#fff" : theme.palette.text.secondary,
+                                    color: mode === "anlik" ? "#fff" : muiTheme.palette.text.secondary,
                                     border: `1px solid ${borderColor} !important`,
                                     '&:hover': {
                                         bgcolor: mode === "anlik" ? "#1E1E1E" : undefined,
@@ -244,7 +250,7 @@ function App() {
                                 onClick={() => handleModeChange("7gun")}
                                 sx={{
                                     bgcolor: mode === "7gun" ? "#1E1E1E" : undefined,
-                                    color: mode === "7gun" ? "#fff" : theme.palette.text.secondary,
+                                    color: mode === "7gun" ? "#fff" : muiTheme.palette.text.secondary,
                                     border: `1px solid ${borderColor} !important`,
                                     '&:hover': {
                                         bgcolor: mode === "7gun" ? "#1E1E1E" : undefined,
@@ -259,7 +265,7 @@ function App() {
                                 onClick={() => handleModeChange("14gun")}
                                 sx={{
                                     bgcolor: mode === "14gun" ? "#1E1E1E" : undefined,
-                                    color: mode === "14gun" ? "#fff" : theme.palette.text.secondary,
+                                    color: mode === "14gun" ? "#fff" : muiTheme.palette.text.secondary,
                                     border: `1px solid ${borderColor} !important`,
                                     '&:hover': {
                                         bgcolor: mode === "14gun" ? "#1E1E1E" : undefined,
@@ -271,30 +277,46 @@ function App() {
                         </ButtonGroup>
                     </Box>
 
-                    {error && (
-                        <Alert severity="error" sx={{ mb: 2 }}>
-                            {error}
-                        </Alert>
-                    )}
+                    {/* Loading ve main card sabit yükseklik */}
+                    <Box>
+                        {(loading || locationLoading) ? (
+                            <Box
+                                display="flex"
+                                flexDirection="column"
+                                alignItems="center"
+                                justifyContent="center"
+                                sx={{ minHeight: 320 }}
+                            >
+                                <CircularProgress />
+                                <Typography mt={2}>
+                                    {locationLoading ? "Konum alınıyor..." : "Yükleniyor..."}
+                                </Typography>
+                            </Box>
+                        ) : weather ? (
+                            <>
+                                <WeatherCard weather={weather} />
+                                {(mode === "7gun" || mode === "14gun") && forecast && forecast.forecast && (
+                                    // mt: 2 forecast.jsx'den kaldırıldı!
+                                    <WeatherForecast
+                                        forecastDays={forecast.forecast.forecastday}
+                                        showCount={mode === "14gun" ? 14 : 7}
+                                    />
+                                )}
+                            </>
+                        ) : null}
+                    </Box>
 
-                    {(loading || locationLoading) ? (
-                        <Box display="flex" flexDirection="column" alignItems="center" mt={4}>
-                            <CircularProgress />
-                            <Typography mt={2}>
-                                {locationLoading ? "Konum alınıyor..." : "Yükleniyor..."}
-                            </Typography>
-                        </Box>
-                    ) : weather ? (
-                        <>
-                            <WeatherCard weather={weather} />
-                            {(mode === "7gun" || mode === "14gun") && forecast && forecast.forecast && (
-                                <WeatherForecast
-                                    forecastDays={forecast.forecast.forecastday}
-                                    showCount={mode === "14gun" ? 14 : 7}
-                                />
-                            )}
-                        </>
-                    ) : null}
+                    {/* Alt snackbar ile uyarı gösterimi */}
+                    <Snackbar
+                        open={snackbar.open}
+                        onClose={handleSnackbarClose}
+                        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+                        autoHideDuration={5000}
+                    >
+                        <MuiAlert severity="error" onClose={handleSnackbarClose} sx={{ width: "100%" }} variant="filled">
+                            {snackbar.msg}
+                        </MuiAlert>
+                    </Snackbar>
                 </Box>
             </Container>
         </ThemeProvider>
