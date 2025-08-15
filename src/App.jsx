@@ -202,6 +202,9 @@ function App() {
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [mode]);
 
+    // Sabit border rengi (gri)
+    const borderColor = "#333";
+
     return (
         <ThemeProvider theme={theme}>
             <CssBaseline />
@@ -224,18 +227,14 @@ function App() {
                                 variant={mode === "anlik" ? "contained" : "outlined"}
                                 color="primary"
                                 onClick={() => handleModeChange("anlik")}
-                                sx={
-                                    mode === "anlik"
-                                        ? {
-                                            bgcolor: "#1E1E1E",
-                                            color: "#fff",
-                                            border: "1px solid #333",
-                                            '&:hover': {
-                                                bgcolor: "#1E1E1E",
-                                            }
-                                        }
-                                        : {}
-                                }
+                                sx={{
+                                    bgcolor: mode === "anlik" ? "#1E1E1E" : undefined,
+                                    color: mode === "anlik" ? "#fff" : theme.palette.text.secondary,
+                                    border: `1px solid ${borderColor} !important`,
+                                    '&:hover': {
+                                        bgcolor: mode === "anlik" ? "#1E1E1E" : undefined,
+                                    }
+                                }}
                             >
                                 Anlık
                             </Button>
@@ -243,18 +242,14 @@ function App() {
                                 variant={mode === "7gun" ? "contained" : "outlined"}
                                 color="primary"
                                 onClick={() => handleModeChange("7gun")}
-                                sx={
-                                    mode === "7gun"
-                                        ? {
-                                            bgcolor: "#1E1E1E",
-                                            color: "#fff",
-                                            border: "1px solid #333",
-                                            '&:hover': {
-                                                bgcolor: "#1E1E1E",
-                                            }
-                                        }
-                                        : {}
-                                }
+                                sx={{
+                                    bgcolor: mode === "7gun" ? "#1E1E1E" : undefined,
+                                    color: mode === "7gun" ? "#fff" : theme.palette.text.secondary,
+                                    border: `1px solid ${borderColor} !important`,
+                                    '&:hover': {
+                                        bgcolor: mode === "7gun" ? "#1E1E1E" : undefined,
+                                    }
+                                }}
                             >
                                 7 Günlük
                             </Button>
@@ -262,18 +257,14 @@ function App() {
                                 variant={mode === "14gun" ? "contained" : "outlined"}
                                 color="primary"
                                 onClick={() => handleModeChange("14gun")}
-                                sx={
-                                    mode === "14gun"
-                                        ? {
-                                            bgcolor: "#1E1E1E",
-                                            color: "#fff",
-                                            border: "1px solid #333",
-                                            '&:hover': {
-                                                bgcolor: "#1E1E1E",
-                                            }
-                                        }
-                                        : {}
-                                }
+                                sx={{
+                                    bgcolor: mode === "14gun" ? "#1E1E1E" : undefined,
+                                    color: mode === "14gun" ? "#fff" : theme.palette.text.secondary,
+                                    border: `1px solid ${borderColor} !important`,
+                                    '&:hover': {
+                                        bgcolor: mode === "14gun" ? "#1E1E1E" : undefined,
+                                    }
+                                }}
                             >
                                 14 Günlük
                             </Button>
